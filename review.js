@@ -490,7 +490,7 @@ function renderReviews() {
 
       const idNumber = (rec.fields["ID Number"] ?? "").toString().toLowerCase();
 
-      const vendorNames = getLinkedRecords(VENDOR_TABLE, rec.fields["Vendor to backcharge"] || [])
+      const vendorNames = getLinkedRecords(VENDOR_TABLE, rec.fields["Vendor Brick and Mortar Location"] || [])
         .map(v => v.name)
         .join(", ")
         .toLowerCase();
@@ -548,7 +548,7 @@ function renderReviews() {
     const photoCount = photos.length;
 
     // Vendor(s) chip
-    const vendors = getLinkedRecords(VENDOR_TABLE, fields["Vendor to backcharge"] || []);
+    const vendors = getLinkedRecords(VENDOR_TABLE, fields["Name"] || []);
     const vendorLinksHtml = vendors.map(v => {
       const safeName = escapeHtml(v.name);
       if (v.id) {
@@ -1277,14 +1277,14 @@ function onSheetEsc(e){ if (e.key === "Escape") closeDecisionSheet(); }
 // 🔧 CHANGED: helper to pick the vendor **linked-record** field safely
 function getVendorLinkFieldNameForPatch(rec) {
   const f = rec?.fields || {};
-  const candidates = ["Vendor to backcharge", "Vendor Brick and Mortar Location"];
+  const candidates = ["Vendor Brick and Mortar Location"];
   // Prefer whichever currently contains linked-record IDs
   for (const k of candidates) {
     const v = f[k];
     if (looksLikeLinkedIds(v)) return k;
   }
   // Fallback to the conventional linked field
-  return "Vendor to backcharge";
+  return "Vendor Brick and Mortar Location";
 }
 
 async function confirmDecision(decision) {
