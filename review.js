@@ -531,7 +531,7 @@ function renderReviews() {
   records.forEach(record => {
     const fields = record.fields;
     const jobName = fields["Job Name"] || "";
-    const reasonFieldName = pickFieldName(fields, [ "Reason for Backcharge"]);
+    const reasonFieldName = pickFieldName(fields, [ "Reason for dispute"]);
     const reason = fields[reasonFieldName] || "";
     const idNumber = fields["ID Number"];
 
@@ -911,7 +911,7 @@ function openDecisionSheet(recordId, jobName, decision) {
 
   // Sub backcharge reason: prefer an explicit sub backcharge field, fallback to generic if that’s what your base uses
   const subReasonFieldName =
-    ["Reason for Backcharge", "Reason for backcharge", "Reason for dispute", "Reason"]
+    ["Sub Reason for Backcharge"]
       .find(k => Object.prototype.hasOwnProperty.call(recFields, k)) || null;
 
   if (subReasonInput) {
@@ -1381,7 +1381,7 @@ async function confirmDecision(decision) {
 
   // Sub reason field (prioritize an explicit sub-backcharge reason column)
   const subReasonFieldName =
-    ["Reason for Backcharge", "Reason for backcharge", "Reason for dispute", "Reason"]
+    ["Sub Reason for Backcharge"]
       .find(k => Object.prototype.hasOwnProperty.call(recFields, k)) || null;
 
   if (needSubReason && subReasonFieldName) {
