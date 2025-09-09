@@ -1075,17 +1075,17 @@ function ensureDisputeForm(sheet) {
         <!-- Row: Sub Reason (conditional full width) -->
     <div id="bf-sub-reason-row" class="bf-reason bf-hidden">
       <label for="subReasonInput">
-        Reason for Backcharge <span class="asterisk">*</span>
+        Subcontractor Reason <span class="asterisk">*</span>
       </label>
-      <textarea id="subReasonInput" placeholder="Required when a Sub is selected and amount is entered"></textarea>
+      <textarea id="subReasonInput" placeholder="Required when a Subcontractor amount is entered"></textarea>
     </div>
 
     <!-- Row: Vendor Reason (conditional full width) -->
     <div id="bf-vendor-reason-row" class="bf-reason bf-hidden">
       <label for="vendorReasonInput">
-        Reason for Vendor Backcharge <span class="asterisk">*</span>
+        Vendor Reason <span class="asterisk">*</span>
       </label>
-      <textarea id="vendorReasonInput" placeholder="Required when a Vendor is selected and amount is entered"></textarea>
+      <textarea id="vendorReasonInput" placeholder="Required when a Vendor amount is entered"></textarea>
     </div>
 
     <br>
@@ -1116,14 +1116,13 @@ function ensureDisputeForm(sheet) {
 
     // EXPOSED globally via outer-scope variable
     updateConditionalReasonsUI = () => {
-      const subChosen    = !!(disputeSubSelect?.value || "");
-      const vendorChosen = !!(disputeVendorSelect?.value || "");
-
+      // NOTE: Now reasons appear (and become required) whenever amount > 0,
+      // regardless of whether a linked record is selected.
       const subAmtVal    = parseCurrencyInput(disputeAmountInput?.value ?? "");
       const vendorAmtVal = parseCurrencyInput(disputeVendorAmountInput?.value ?? "");
 
-      const needSubReason    = subChosen    && subAmtVal != null && subAmtVal > 0;
-      const needVendorReason = vendorChosen && vendorAmtVal != null && vendorAmtVal > 0;
+      const needSubReason    = subAmtVal != null && subAmtVal > 0;
+      const needVendorReason = vendorAmtVal != null && vendorAmtVal > 0;
 
       // Toggle visibility
       subReasonRow?.classList.toggle("bf-hidden", !needSubReason);
@@ -1361,17 +1360,18 @@ async function confirmDecision(decision) {
     vendorAmtParsed == null ? null : vendorAmtParsed;
 
   // === Conditional reason requirements ===
-  const needSubReason    = !!selectedSubId    && (subAmtParsed != null && subAmtParsed > 0);
-  const needVendorReason = !!selectedVendorId && (vendorAmtParsed != null && vendorAmtParsed > 0);
+  // 🔧 CHANGED: reasons are required whenever amount > 0 (regardless of selection)
+  const needSubReason    = (subAmtParsed != null && subAmtParsed > 0);
+  const needVendorReason = (vendorAmtParsed != null && vendorAmtParsed > 0);
 
   // Block if required reasons are missing
   if (needSubReason && !(subReasonInput?.value || "").trim()) {
-    alert("Please provide a Reason for Backcharge for the Subcontractor.");
+    alert("Please provide a Subcontractor Reason when an amount is entered.");
     subReasonInput?.focus();
     return;
   }
   if (needVendorReason && !(vendorReasonInput?.value || "").trim()) {
-    alert("Please provide a Reason for Vendor Backcharge.");
+    alert("Please provide a Vendor Reason when an amount is entered.");
     vendorReasonInput?.focus();
     return;
   }
@@ -1658,6 +1658,8 @@ function startBackgroundNewRecordsCheck() {
         } else {
           showNewRecordsBanner(toAdd);
         }
+     
+
       }
 
       // PRUNE: anything that no longer matches scope (now approved/disputed)
