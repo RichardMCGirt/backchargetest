@@ -511,12 +511,12 @@ function renderReviews() {
   records.forEach(record => {
     const fields = record.fields;
     const jobName = fields["Job Name"] || "";
-    const reasonFieldName = pickFieldName(fields, [ "Reason for dispute"]);
+    const reasonFieldName = pickFieldName(fields, ["Reason for Builder Backcharge"]);
     const reason = fields[reasonFieldName] || "";
     const idNumber = fields["ID Number"];
 
     // 🔧 CHANGED: show amounts separately (sub vs vendor)
-    const subBackcharge = fields["Backcharge Amount"];
+    const subBackcharge = fields["Sub Backcharge Amount"];
     const vendorBackcharge = fields["Vendor Amount to Backcharge"];
 
     let subAmtChip = "";
@@ -863,7 +863,7 @@ function openDecisionSheet(recordId, jobName, decision) {
   const reasonFieldName = pickFieldName(rec?.fields || {}, ["Reason for dispute"]);
   const originalReason = rec?.fields?.[reasonFieldName] || "";
 
-  const originalBackcharge = rec?.fields?.["Backcharge Amount"];
+  const originalBackcharge = rec?.fields?.["Sub Backcharge Amount"];
   const originalVendorAmt  = rec?.fields?.["Vendor Amount to Backcharge"];
 
   if (disputeReasonInput) {
@@ -899,7 +899,7 @@ function openDecisionSheet(recordId, jobName, decision) {
 
   // Vendor backcharge reason: handle a few likely schemas, only prefill if present
   const vendorReasonFieldName =
-    ["Vendor Backcharge reason", "Vendor Backcharge Reason", "Reason for Vendor Backcharge", "Reason for Vendor backcharge"]
+    ["Vendor Backcharge Reason"]
       .find(k => Object.prototype.hasOwnProperty.call(recFields, k)) || null;
 
   if (vendorReasonInput) {
@@ -1069,11 +1069,7 @@ function ensureDisputeForm(sheet) {
 
     <br>
 
-    <!-- Row: Reason (full width) -->
-    <div class="bf-reason">
-      <label for="disputeReasonInput">Reason</label>
-      <textarea id="disputeReasonInput" placeholder="(No reason on record)"></textarea>
-    </div>
+  
 
   </div>
 `;
@@ -1332,7 +1328,7 @@ async function confirmDecision(decision) {
   fieldsToPatch[vendorLinkFieldName] = selectedVendorId ? [selectedVendorId] : [];
 
   // 🔧 CHANGED: patch **both** amount fields independently (no winner)
-  fieldsToPatch["Backcharge Amount"] = subAmtParsed == null ? null : subAmtParsed;
+  fieldsToPatch["Sub Backcharge Amount"] = subAmtParsed == null ? null : subAmtParsed;
 
   // Always send it; Airtable omits empty fields from reads, but you can still write them.
   fieldsToPatch["Vendor Amount to Backcharge"] =
@@ -1369,7 +1365,7 @@ async function confirmDecision(decision) {
 
   // Vendor reason field (only patch if column exists to avoid 422)
   const vendorReasonFieldName =
-    ["Vendor Backcharge reason", "Vendor Backcharge Reason", "Reason for Vendor Backcharge", "Reason for Vendor backcharge"]
+    ["Vendor Backcharge reason"]
       .find(k => Object.prototype.hasOwnProperty.call(recFields, k)) || null;
 
   if (needVendorReason && vendorReasonFieldName) {
@@ -1378,7 +1374,7 @@ async function confirmDecision(decision) {
 
   // Keep existing behavior: when Dispute, also write the generic dispute reason if your base uses that.
   if (decision === "Dispute") {
-    const disputeReasonField = ["Reason for dispute", "Reason"]
+    const disputeReasonField = ["Reason for Builder Backcharge"]
       .find(k => Object.prototype.hasOwnProperty.call(recFields, k));
     if (disputeReasonField && disputeReasonInput) {
       fieldsToPatch[disputeReasonField] = (disputeReasonInput.value || "").trim() || null;
