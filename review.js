@@ -5,17 +5,14 @@ const AIRTABLE_API_KEY = "pat6QyOfQCQ9InhK4.4b944a38ad4c503a6edd9361b2a6c1e7f02f
 const BASE_ID = "appQDdkj6ydqUaUkE";
 const TABLE_ID = "tblg98QfBxRd6uivq";
 
-// Linked tables
 const SUBCONTRACTOR_TABLE = "tblgsUP8po27WX7Hb"; // “Subcontractor Company Name”
 const CUSTOMER_TABLE      = "tblQ7yvLoLKZlZ9yU"; // “Client Name”
 const TECH_TABLE          = "tblj6Fp0rvN7QyjRv"; // “Full Name”
 const BRANCH_TABLE        = "tblD2gLfkTtJYIhmK"; // “Office Name”
 const VENDOR_TABLE        = "tblp77wpnsiIjJLGh"; // Vendor table used by "Vendor to backcharge"
-// Reuse your main list scope everywhere
 const DEFAULT_VIEW_FOR_BG_CHECK = "viwTHoVVR3TsPDR6k";
 let bgCountdownHandle = null;
 
-// Keep one copy of your base list formula to use in both places
 const FILTER_BASE_FORMULA = `AND(
   {Type of Backcharge} = 'Builder Issued Backcharge',
   OR(
@@ -25,43 +22,29 @@ const FILTER_BASE_FORMULA = `AND(
 )`;
 
 // Cache & State
-const recordCache = {};            // `${tableId}_${recId}` -> displayName
+const recordCache = {};            
 const tableRecords = {};
 const FORCE_AUTOLOAD = true;
-           // tableId -> full records[]
+       
 let allRecords = []; 
 let activeTechFilter = null;
 let activeBranchFilter = null;
 let hasRestoredFilters = false;
-
 let pendingDecision = null;
 let pendingRecordId = null;
 let pendingRecordName = null;
-let pendingRecordIdNumber = null; // <-- store ID Number for UI + toast
+let pendingRecordIdNumber = null;
 let lastActiveCardId = null;
-
-// Dispute/Approve form elements (created once, reused)
 let disputeFormContainer = null;
-let disputeReasonInput = null;           // editable original reason
-let disputeSubSelect = null;             // NEW: keep reference
-let disputeVendorSelect = null;          // NEW: vendor select (editable)
-
-// Amount inputs (each maps to its own field now)
-// 🔧 CHANGED: clarify mapping in comment
-let disputeAmountInput = null;           // maps to "Backcharge Amount" (sub amount)
-let disputeVendorAmountInput = null;     // maps to "Vendor Amount to Backcharge" (vendor amount)
-
-// Secondary Subcontractor amount (optional, separate field(s) in base)
+let disputeReasonInput = null;           
+let disputeSubSelect = null;             
+let disputeVendorSelect = null;          
+let disputeAmountInput = null;           
+let disputeVendorAmountInput = null;     
 let disputeAmount2Input = null;
-
-// Read-only (no longer used for vendor name only)
-// Kept for compatibility if needed elsewhere
 let disputeVendorDisplay = null;
-
-let subReasonInput = null;        // NEW: reason for Sub backcharge
-let vendorReasonInput = null;     // NEW: reason for Vendor backcharge
-
-// NEW: make the conditional-UI updater accessible outside ensureDisputeForm
+let subReasonInput = null;       
+let vendorReasonInput = null;    
 let updateConditionalReasonsUI = null;
 
 /* =========================
@@ -84,8 +67,6 @@ function startConsoleCountdown(durationMs) {
     const totalSec = Math.ceil(remaining / 1000);
     const mm = Math.floor(totalSec / 60);
     const ss = totalSec % 60;
-    // log a single line each second
-    console.log(`⏳ Next background fetch in ${pad(mm)}:${pad(ss)}`);
     if (remaining <= 0) stopConsoleCountdown();
   };
 
@@ -205,7 +186,6 @@ function getLinkedRecords(tableId, fieldVal) {
               hit.fields["Company"] ||
               hit.fields["Company Name"] ||
               hit.fields["Display Name"] ||
-              // fall back to first non-empty string in the record
               Object.values(hit.fields).find(x => typeof x === "string" && x.trim().length) ||
               v;
             recordCache[`${tableId}_${v}`] = name;
@@ -278,6 +258,7 @@ async function fetchAllRecords(tableId, keyFields) {
 
   return records;
 }
+
 function renderPrimaryList(records) {
   const mount = document.getElementById("primary-list") || (() => {
     const d = document.createElement("div");
@@ -405,7 +386,6 @@ function applyFiltersFromURLOrStorage(){
   renderReviews();
 }
 
-/* When filters/search change, keep the URL in sync */
 function updateURLFromCurrentFilters(){
   const searchBar = document.getElementById("searchBar");
   setURLParams({
@@ -845,7 +825,6 @@ function openDecisionSheet(recordId, jobName, decision) {
   buildVendorOptions(disputeVendorSelect);
 
   // Resolve the vendor link field name and prefill
-  // 🔧 CHANGED: prefer linked-record field automatically
   const vendorLinkFieldName = getVendorLinkFieldNameForPatch(rec);
   const vendorIds = Array.isArray(rec?.fields?.[vendorLinkFieldName]) ? rec.fields[vendorLinkFieldName] : [];
   if (disputeVendorSelect) {
@@ -1116,7 +1095,6 @@ function ensureDisputeForm(sheet) {
 
     // EXPOSED globally via outer-scope variable
     updateConditionalReasonsUI = () => {
-      // NOTE: Now reasons appear (and become required) whenever amount > 0,
       // regardless of whether a linked record is selected.
       const subAmtVal    = parseCurrencyInput(disputeAmountInput?.value ?? "");
       const vendorAmtVal = parseCurrencyInput(disputeVendorAmountInput?.value ?? "");
@@ -1289,6 +1267,7 @@ function closeDecisionSheet(){
 
   document.removeEventListener("keydown", onSheetEsc);
 }
+
 function onSheetEsc(e){ if (e.key === "Escape") closeDecisionSheet(); }
 
 /* =========================
@@ -1585,18 +1564,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 })();
 
-/* =========================
-   Background New Records Finder for Airtable
-   - Detects records not currently shown in UI
-   - Prompts user to load them
-   - Optional auto-load toggle
-========================= */
-
-/** REQUIRE: These three constants must already exist in your app. */
-// const AIRTABLE_API_KEY = "...";
-// const BASE_ID = "...";
-// const TABLE_ID = "...";
-
 /** Poll interval (ms) */
 const BACKGROUND_CHECK_INTERVAL_MS = 15 * 60 * 1000; // 900000 ms = 15 minutes
 
@@ -1658,8 +1625,6 @@ function startBackgroundNewRecordsCheck() {
         } else {
           showNewRecordsBanner(toAdd);
         }
-     
-
       }
 
       // PRUNE: anything that no longer matches scope (now approved/disputed)
@@ -1755,7 +1720,6 @@ async function fetchUpdatedRecordsSince(sinceIso) {
   const params = new URLSearchParams();
   params.set("pageSize", "100");
   params.set("filterByFormula", filter);
-  // IMPORTANT: do NOT pass a view here — we need to see rows that moved out of scope.
 
   let all = [];
   let offset = null;
