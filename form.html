@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Submit Backcharge</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="form/form.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html">Review Backcharges</a></li>
+    </ul>
+  </nav>
+
+  <h2>Submit a Backcharge</h2>
+
+  <form id="backchargeForm">
+    <label>Job Name:</label>
+    <input type="text" id="jobName" required />
+
+    <label>Branch:</label>
+    <select id="branch" required>
+      <option value="">-- Select Branch --</option>
+    </select>
+
+    <label>Customer:</label>
+    <select id="customer" required>
+      <option value="">-- Select Customer --</option>
+    </select>
+
+<div id="technician-container">
+  <label>Field Technician:</label>
+  <select id="technician" required>
+    <option value="">-- Select Technician --</option>
+  </select>
+</div>
+
+    <label>Reason for Backcharge:</label>
+    <textarea id="reason" required></textarea>
+    
+ <label for="amount">Backcharge Amount</label>
+        <!-- Visually formatted currency input -->
+        <input id="amount" type="text" inputmode="decimal" autocomplete="off" class="currency" placeholder="$0.00" />
+      
+    <!-- Photos input -->
+    <label>Photos:</label>
+    <input
+      id="photos"
+      type="file"
+      accept="image/*"
+      multiple
+      capture="environment"
+    />
+
+    <!-- Optional preview area (your JS can populate) -->
+    <div id="photoPreview" class="photo-preview"></div>
+
+    <button type="submit">Submit</button>
+  </form>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+
+ <script>
+        window.env = {
+            AIRTABLE_API_KEY: 'patXTUS9m8os14OO1.6a81b7bc4dd88871072fe71f28b568070cc79035bc988de3d4228d52239c8238',
+            AIRTABLE_BASE_ID: 'appO21PVRA4Qa087I',
+            AIRTABLE_TABLE_NAME: 'tbl6EeKPsNuEvt5yJ',
+        };
+        </script>
+  <!-- Load as a module because form.js imports ../dropbox.js -->
+  <script type="module" src="form/form.js"></script>
+</body>
+</html>

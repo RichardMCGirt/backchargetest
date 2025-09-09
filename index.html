@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+/>
+<title>Backcharge Review (Mobile)</title>
+  <link rel="stylesheet" href="review.css">
+
+</head>
+<body>
+<br>
+<!-- Top App Bar / Filters -->
+<div class="appbar">
+  <div class="row">
+    <div class="title">Backcharge Review</div>
+  </div>
+
+  <div class="filters" id="filtersGrid">
+    <div id="branchFilterContainer">
+      <select id="branchFilter" aria-label="Filter by branch">
+        <option value="">-- All Branches --</option>
+      </select>
+    </div>
+    <div>
+      <select id="techFilter" aria-label="Filter by technician">
+        <option value="">-- All Technicians --</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="searchwrap">
+    <input id="searchBar" type="text" placeholder="Search job, subcontractor, customer, tech, branch…" />
+  </div>
+</div>
+
+<!-- Cards container -->
+<div id="reviewContainer"></div>
+
+<!-- Sticky Quick Actions (contextual to last tapped/active card) -->
+<div class="quickbar" id="quickbar" role="region" aria-live="polite">
+  <div class="label" id="quickbarLabel">Select a job…</div>
+  <button class="dispute" id="qbDispute" aria-label="Dispute">Dispute</button>
+  <button class="approve" id="qbApprove" aria-label="Approve">Approve</button>
+</div>
+
+<!-- Bottom Sheet Confirmation -->
+<div class="sheet" id="decisionSheet" aria-modal="true" role="dialog">
+  <div class="sheet-handle"></div>
+  <h3 id="decisionTitle">Confirm</h3>
+  <p id="decisionMessage">Are you sure?</p>
+  <div class="actions">
+    <button class="cancel" id="cancelDecisionBtn">Cancel</button>
+    <button class="dispute" id="confirmDisputeBtn">Dispute</button>
+    <button class="approve" id="confirmApproveBtn">Approve</button>
+  </div>
+</div>
+
+<!-- Photo Modal -->
+<div id="photoModal">
+  <button class="close" aria-label="Close">&times;</button>
+  <div id="photoGallery"></div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+<div id="new-records-banner" role="status" aria-live="polite">
+  <div class="nb-row">
+    <div class="nb-msg"></div>
+    <div class="nb-actions">
+      <button type="button" class="nb-load">Load</button>
+      <button type="button" class="nb-dismiss">Dismiss</button>
+      <label class="nb-autoload">
+        <input type="checkbox" class="nb-autoload-input">
+        Always auto-load
+      </label>
+    </div>
+  </div>
+</div>
+<div id="new-records-toast"></div>
+<!-- Loading overlay -->
+<div id="loadingOverlay"><div class="spinner" aria-hidden="true"></div></div>
+<div id="sheetBackdrop"></div>
+
+  <script src="review.js"></script>
+</body>
+</html>

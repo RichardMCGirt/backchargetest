@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+  />
+  <title>GM Outcome Portal</title>
+  <style>
+    :root{
+      --bg:#0f1115; --card:#151923; --muted:#8b93a7; --text:#e9edf1;
+      --accent:#34c759; --danger:#ff3b30; --border:#232a3a;
+      --input:#0c0f14;
+    }
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif}
+    .appbar{position:sticky;top:0;z-index:10;background:linear-gradient(180deg,#0f1115 80%,transparent);padding:12px;border-bottom:1px solid var(--border)}
+    .title{font-weight:700;font-size:18px;text-align:center}
+    .controls{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+    .controls select,.controls input{padding:10px;border-radius:12px;border:1px solid var(--border);background:var(--input);color:var(--text);font-size:14px}
+    .container{display:grid;gap:10px;padding:12px 12px 32px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+    .job{font-weight:700;font-size:16px;margin:0 0 8px}
+    .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .chip{display:inline-block;padding:6px 10px;border-radius:999px;border:1px solid var(--border);font-size:12px;background:#1d2330;color:#cdd5ea}
+    .chip.ok{background:rgba(52,199,89,.12);border-color:#245f3d;color:#9fe3b9}
+    .chip.no{background:rgba(255,59,48,.12);border-color:#7a2a28;color:#ffb3ae}
+    .muted{color:var(--muted);font-size:12px}
+    .field{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}
+    .select{padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:var(--input);color:var(--text);font-size:14px}
+    .btn{padding:6px 10px;border-radius:999px;border:1px solid var(--border);background:#1d2330;color:#cdd5ea;font-size:12px}
+    .status{font-size:12px}
+    .status.saving{color:#d7e3ff}
+    .status.saved{color:#9fe3b9}
+    .status.error{color:#ffb3ae}
+    .footer{padding:10px 12px;color:var(--muted);font-size:12px}
+    @media (max-width: 480px){ .controls{grid-template-columns:1fr} }
+  </style>
+</head>
+<body>
+  <div class="appbar">
+    <div class="title">GM Outcome Portal</div>
+    
+      <input id="searchBar" type="text" placeholder="Search job name…" />
+    </div>
+  </div>
+
+  <div class="container" id="list"></div>
+  <div class="footer" id="counts"></div>
+
+  <script src="decesion.js"></script>
+</body>
+</html>

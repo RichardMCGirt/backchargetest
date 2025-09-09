@@ -1,0 +1,155 @@
+/* style.css */
+
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f7f9fb;
+  margin: 0;
+  padding: 40px;
+  color: #333;
+}
+
+
+h2 {
+  text-align: center;
+  color: #003366; /* dark blue from logo */
+  margin-bottom: 25px;
+}
+
+form {
+  max-width: 600px;
+  margin: 0 auto;
+  background: #fff;
+  padding: 25px 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+label {
+  display: block;
+  margin: 15px 0 6px;
+  font-weight: 600;
+  font-size: 15px;
+  color: #004c70; /* teal */
+}
+
+input[type="text"],
+input[type="number"],
+textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 15px;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+textarea:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+button {
+  margin-top: 20px;
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 8px;
+  border: none;
+  background-color: #007b5e; /* green */
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+button:hover {
+  background-color: #006049;
+  transform: scale(1.02);
+}
+
+button:active {
+  transform: scale(0.97);
+}
+/* Navbar container */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #003366; /* Dark blue from Vanir logo */
+  padding: 12px 24px;
+  color: #fff;
+}
+
+/* Brand/Logo */
+.nav-brand {
+  font-size: 20px;
+  font-weight: bold;
+  color: #fff;
+}
+
+/* Links */
+.nav-links {
+  list-style: none;
+  display: flex;
+    align-items: center;
+
+  gap: 24px;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-links li {
+  display: inline;
+}
+
+.nav-links a {
+  color: #fff;
+  text-decoration: none;
+  font-size: 16px;
+  transition: color 0.2s ease;
+}
+
+.nav-links a:hover {
+  color: #00b4d8; /* Teal accent */
+}
+
+/* Hamburger button (hidden by default) */
+.hamburger {
+  display: none;
+  font-size: 24px;
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .nav-links {
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    top: 60px;
+    right: 0;
+    background: #003366;
+    width: 200px;
+    padding: 10px;
+    border-radius: 0 0 8px 8px;
+  }
+
+  .nav-links.open {
+    display: flex;
+  }
+
+  .hamburger {
+    display: block;
+  }
+}

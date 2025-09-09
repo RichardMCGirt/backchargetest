@@ -1,0 +1,561 @@
+ :root{
+    --bg:#0f1115;
+    --card:#151923;
+    --muted:#8b93a7;
+    --text:#e9edf1;
+    --accent:#34c759; /* approve */
+    --danger:#ff3b30; /* dispute */
+    --chip:#1d2330;
+    --border:#232a3a;
+  }
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif}
+  html, body {
+  overflow-x: hidden; /* Disable horizontal scroll */
+  max-width: 100%;
+}
+/* Ensure all containers stay within screen */
+* {
+  box-sizing: border-box;
+}
+  /* Header */
+  .appbar{
+    position:sticky;top:0;z-index:30;background:linear-gradient(180deg,#0f1115 80%,transparent);
+    padding:12px 12px 8px;border-bottom:1px solid var(--border);
+  }
+  .row{display:flex;gap:8px;align-items:center}
+  .row.wrap{flex-wrap:wrap}
+  .title{font-weight:700;font-size:18px}
+  .filters{
+    display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px
+  }
+  .searchwrap{margin-top:8px}
+
+  select, input[type="text"]{
+    padding:12px 12px;border-radius:12px;border:1px solid var(--border);background:#0c0f14;color:var(--text);font-size:14px
+  }
+select {
+  width: 55%;
+  display: block;
+  margin: 4px auto;      /* smaller vertical margin */
+  padding: 4px 6px;      /* reduce internal padding */
+  line-height: 1.2;      /* tighter height */
+}
+
+input[type="text"] {
+  width: 20%;
+  display: block;
+  margin: 0 auto; /* centers horizontally */
+}
+
+.title {
+  font-weight: 700;
+  font-size: 18px;
+  display: inline-block;   /* shrink to fit text */
+  text-align: center;      /* center text inside */
+  margin: 0 auto;          /* center the block itself */
+}
+
+  /* Cards */
+  #reviewContainer{display:grid;gap:12px;padding:12px 12px 96px} /* padding bottom for bottom bar */
+  .review-card{
+    background:var(--card);border:1px solid var(--border);border-radius:16px;padding:12px;box-shadow:0 4px 14px rgba(0,0,0,.25);
+    touch-action:pan-y; /* keep horizontal swipe smooth */
+    position:relative;overflow:hidden
+  }
+  .job-name{font-size:16px;font-weight:700}
+  .kv{margin:8px 0;display:grid;gap:6px 10px}
+  .kv b{color:var(--muted);font-weight:600}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0;
+}
+
+/* Make chips easier to tap on mobile */
+.chip {
+  flex: 1 1 auto; 
+  min-width: max-content; 
+  padding: 6px 10px;
+  text-align: center;
+}
+
+/* Mobile optimization */
+@media (max-width: 480px) {
+  .chips {
+    flex-direction: column; /* stack vertically */
+    align-items: stretch;
+  }
+  .chip {
+    width: 100%; /* full width for tap targets */
+  }
+ .decision-buttons button{
+  width: 70%
+ }
+  select{
+width: 90%;
+ display: block;
+  margin: 0 auto; /* centers horizontally */
+  }
+input[type="text"] {
+  width: 50%;
+  display: block;
+  margin: 0 auto; /* centers horizontally */
+}
+
+}
+  .chip{background:var(--chip);border:1px solid var(--border);padding:6px 10px;border-radius:999px;font-size:12px;color:#cdd5ea}
+  .photos a{color:#a5d6ff;text-decoration:none}
+  .photos a:active{opacity:.7}
+
+  /* Per-card swipe hint overlays */
+  .swipe-hint{
+    position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .15s ease
+  }
+  .swipe-approve{background:linear-gradient(90deg, rgba(52,199,89,.15), transparent)}
+  .swipe-dispute{background:linear-gradient(270deg, rgba(255,59,48,.15), transparent)}
+  .review-card.swiping-right .swipe-hint.swipe-approve{opacity:1}
+  .review-card.swiping-left .swipe-hint.swipe-dispute{opacity:1}
+
+  /* Buttons inside cards (optional quick actions per card) */
+  .decision-buttons{display:flex;gap:8px;margin-top:8px}
+  .decision-buttons button{
+    flex:1;padding:12px;border:none;border-radius:12px;font-weight:700;font-size:14px; width:40% !important;
+  }
+  .approve{background:var(--accent);color:#08110a}
+  .dispute{background:var(--danger);color:white}
+
+  /* Bottom sheet confirm */
+  .sheet{
+    position:fixed;left:0;right:0;bottom:-100%;background:#0c0f14;border-top:1px solid var(--border);
+    border-radius:18px 18px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.5);
+    transition:bottom .25s ease;z-index:60;padding:14px
+  }
+  .sheet.open{bottom:0}
+  .sheet-handle{width:42px;height:5px;background:#2a3448;border-radius:999px;margin:6px auto 12px}
+  .sheet h3{margin:6px 0 2px 0;font-size:16px}
+  .sheet p{margin:0 0 12px 0;color:#c9d1e8;font-size:14px}
+  .sheet .actions{display:flex;gap:10px}
+  .sheet .actions button{flex:1;padding:14px;font-weight:800;border-radius:12px;border:1px solid var(--border);font-size:16px}
+  .sheet .approve{background:var(--accent);border:none}
+  .sheet .dispute{background:var(--danger);border:none}
+  .sheet .cancel{background:#131823;color:#cfd6ea}
+
+  /* Photo modal */
+#photoModal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 70;
+  justify-content: center;
+  align-items: flex-start; /* start at top */
+  overflow: auto; /* allow vertical scroll */
+  padding: 20px;
+}
+
+#photoGallery {
+  display: flex;
+  flex-wrap: wrap; /* allow multiple rows if needed */
+  gap: 10px;
+  max-width: 100%;
+  justify-content: center;
+}
+
+.modal-photo {
+  max-width: 100%;
+  max-height: 100%;
+  height: auto;
+  width: auto;
+  object-fit: contain; /* keep aspect ratio */
+  border-radius: 12px;
+  display: block;
+}
+
+#photoModal .close {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  font-size: 26px;
+  background: #0008;
+  border: 1px solid #555;
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 10px;
+  z-index: 80;
+  cursor: pointer;
+}
+
+
+  /* Toast */
+  #toast{visibility:hidden;min-width:160px;background:#1a2232;color:#fff;text-align:center;border-radius:999px;padding:10px 14px;position:fixed;z-index:80;left:50%;transform:translateX(-50%);bottom:80px}
+  #toast.show{visibility:visible;animation:fadein .2s, fadeout .2s 1.8s}
+  @keyframes fadein{from{opacity:0;transform:translateX(-50%) translateY(10px)} to{opacity:1;transform:translateX(-50%) translateY(0)}}
+  @keyframes fadeout{from{opacity:1} to{opacity:0}}
+
+  /* Loading overlay */
+  #loadingOverlay{display:none;position:fixed;inset:0;background:#0b0f16cc;z-index:90;align-items:center;justify-content:center}
+  .spinner{width:42px;height:42px;border:3px solid #2b3549;border-top-color:#8bb6ff;border-radius:50%;animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* Sticky quick actions (appears when a card is focused by tap) */
+  .quickbar{
+    position:fixed;left:12px;right:12px;bottom:12px;background:#0c1018;border:1px solid var(--border);
+    border-radius:16px;display:none;gap:10px;padding:10px;z-index:65;box-shadow:0 10px 30px rgba(0,0,0,.4)
+  }
+  .quickbar.show{display:flex}
+  .quickbar .label{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+  .quickbar button{padding:12px;border-radius:12px;border:none;font-weight:800}
+  .quickbar .approve{background:var(--accent)}
+  .quickbar .dispute{background:var(--danger);color:#fff}
+
+  /* Small helper text */
+  .muted{color:var(--muted);font-size:12px}
+
+  /* Smaller Approve / Dispute buttons */
+.decision-buttons button,
+.quickbar button,
+.sheet .actions button.approve,
+.sheet .actions button.dispute {
+  flex: 1;
+  padding: 8px 10px;       /* less height */
+  font-size: 14px;         /* smaller text */
+  font-weight: 600;        /* slightly lighter */
+  border-radius: 8px;      /* less rounded */
+}
+
+.quickbar button {
+  min-width: 80px;         /* smaller tap area horizontally */
+}
+
+.sheet .actions button {
+  min-height: 40px;        /* shorter confirm buttons */
+}
+.decision-buttons {
+  grid-template-columns: repeat(2, 1fr); /* two equal-width columns */
+  gap: 26px; /* spacing between buttons */
+  margin-top: 8px;
+}
+
+.decision-buttons button {
+  padding: 8px 10px;  /* small height */
+  font-size: 14px;
+    gap: 6px;                /* less space between buttons */
+
+  font-weight: 600;
+  border-radius: 8px;
+  width: 40%;        /* fill grid cell */
+}
+#reviewContainer,
+.kv,
+.chips,
+.decision-buttons,
+.quickbar,
+.filters,
+.row {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+#reviewContainer {
+  max-width: 85%;
+  margin: 0 auto; /* centers horizontally */
+    overflow: visible;             /* <-- important */
+  position: relative;
+}
+.review-card.swiping {
+  z-index: 10;                   /* float above neighbors */
+  box-shadow: 0 10px 30px rgba(0,0,0,.25);
+}
+.review-card {
+  position: relative;
+  will-change: transform, opacity, box-shadow, height, margin;
+  transition: transform .15s ease, opacity .15s ease, box-shadow .15s ease;
+  transform-origin: 50% 50%;
+}
+/* Make images and media scale down instead of overflowing */
+img, video {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+.review-card.leaving {
+  pointer-events: none;
+}
+.review-card .swipe-hint {
+  opacity: 0;
+  transition: opacity .12s ease;
+}
+.review-card.swiping-left .swipe-hint.swipe-dispute,
+.review-card.swiping-right .swipe-hint.swipe-approve {
+  opacity: 0.85;
+}
+/* Photo modal gallery — prevent side scroll overflow */
+#photoGallery {
+  flex-wrap: wrap; /* Stack on small screens */
+  justify-content: center;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.modal-photo {
+  max-width: 100%; /* Never exceed viewport */
+  height: auto;
+}
+
+/* Buttons: shrink on small screens */
+.decision-buttons button,
+.quickbar button {
+  min-width: 0; /* Allow buttons to shrink instead of pushing layout wider */
+  max-width: 40%;
+}
+.decision-buttons button{
+    margin: 0 auto; /* centers horizontally */
+
+}
+/* Long text in chips/labels wraps instead of pushing out */
+.chip, .label {
+  white-space: normal;
+  word-break: break-word;
+}
+
+.reason-photo-row {
+  display: flex;
+  justify-content: space-between; /* space between reason and photo count */
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap; /* keeps it mobile friendly */
+}
+
+.reason-photo-row .kv {
+  text-align: left;
+}
+
+
+
+.reason-photo-row .photos a {
+  white-space: nowrap; /* prevents line break in "image(s)" */
+}
+/* Backdrop behind confirm sheet */
+#sheetBackdrop{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  backdrop-filter: blur(2px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s ease;
+  z-index: 59; /* just below .sheet (z-index:60) */
+}
+#sheetBackdrop.show{
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Make the sheet pop when opening */
+.sheet{
+  will-change: transform;
+}
+.sheet.open{
+  animation: sheetPop .22s ease;
+}
+@keyframes sheetPop{
+  0%   { transform: translateY(8px); opacity: .96; }
+  100% { transform: translateY(0);   opacity: 1;   }
+}
+
+/* Stronger visual emphasis for confirm buttons */
+.sheet .actions button.approve,
+.sheet .actions button.dispute{
+  position: relative;
+  box-shadow: 0 8px 24px rgba(0,0,0,.35);
+}
+
+/* Slightly bolder header/message */
+.sheet h3{ font-size: 18px; letter-spacing: .2px; }
+.sheet p { font-size: 15px; }
+@media (max-width: 768px) {
+  #reviewContainer {
+    max-width: 100%;      /* let it breathe edge-to-edge a bit more */
+  }
+  .review-card {
+    font-size: 0.9rem;   /* slightly smaller text */
+    padding: 10px;       /* tighter padding */
+    margin-bottom: 10px; /* reduce card spacing */
+    height: 100% !important;
+  }
+  .review-card .job-name {
+    font-size: 1rem;     /* keep job name readable */
+  }
+  .review-card .chip {
+    font-size: 0.8rem;   /* shrink chips but still legible */
+    padding: 2px 6px;
+  }
+}
+
+#disputeFormContainer select {
+  width: 90%;
+}
+
+ /* Container */
+    #disputeFormContainer { width: 100%; padding: 6px 0; }
+
+    /* Mobile-first grid: flexible amount column */
+    #disputeFormContainer .bf-grid {
+      display: grid;
+      width: 100%;
+      grid-template-columns: minmax(0, 1fr) minmax(120px, 42%); /* who | amount */
+      gap: 12px 12px;
+      align-items: start;
+      box-sizing: border-box;
+    }
+
+    /* Base (neutral) styles */
+    #disputeFormContainer label {
+      font-weight: 600;
+      align-self: center;
+      font-size: 14px;
+      line-height: 1.2;
+      color: #0f172a;
+    }
+    #disputeFormContainer .bf-amount-label {
+      text-align: right;
+      align-self: center;
+      padding-right: 4px;
+    }
+    #disputeFormContainer .bf-display {
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      background: #f3f4f6;
+      padding: 12px;
+      min-height: 44px; /* finger-friendly */
+      line-height: 1.35;
+      word-break: break-word;
+      white-space: pre-wrap;
+      box-sizing: border-box;
+      color: #111;
+    }
+    #disputeFormContainer input[type="text"],
+    #disputeFormContainer select {
+      height: 44px;            /* no iOS zoom */
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 10px 12px;
+      width: 100%;             /* fill the amount/selector column */
+      box-sizing: border-box;
+      background: #fff;
+      color: #111;             /* amounts/text black */
+      font-size: 16px;         /* avoid iOS zoom */
+    }
+    #disputeFormContainer input::placeholder { color: #6b7280; }
+
+    /* Reason spans full width */
+    #disputeFormContainer .bf-reason label { grid-column: 1 / -1; }
+    #disputeFormContainer .bf-reason .bf-display { grid-column: 1 / -1; }
+
+    /* --- Dispute mode: labels + read-only values white, inputs remain black --- */
+    #decisionSheet.dispute-mode #disputeFormContainer label,
+    #decisionSheet.dispute-mode #disputeFormContainer .bf-amount-label {
+      color: #fff !important;
+    }
+    #decisionSheet.dispute-mode #disputeFormContainer .bf-display {
+      color: #fff !important;
+      background: transparent;
+      border-color: rgba(255, 255, 255, 0.35);
+    }
+    #decisionSheet.dispute-mode #disputeFormContainer input[type="text"],
+    #decisionSheet.dispute-mode #disputeFormContainer select {
+      color: #111 !important;
+      background: #fff !important;
+      border-color: #e5e7eb !important;
+    }
+    #decisionSheet.dispute-mode #disputeFormContainer input::placeholder {
+      color: #6b7280 !important;
+    }
+
+    /* Extra small screens: let amount column take up to 50% */
+    @media (max-width: 360px) {
+      #disputeFormContainer .bf-grid {
+        grid-template-columns: minmax(0, 1fr) minmax(110px, 50%);
+        gap: 10px 10px;
+      }
+    }
+
+    /* Larger screens: fixed amount column */
+    @media (min-width: 640px) {
+      #disputeFormContainer .bf-grid {
+        grid-template-columns: minmax(0, 1fr) 260px;
+      }
+    }
+
+ /* New-records banner */
+  #new-records-banner {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    z-index: 9999;
+    display: none;
+    background: #0f172a;           /* slate-900 */
+    color: #f8fafc;                /* slate-50 */
+    border: 1px solid #1e293b;     /* slate-800 */
+    border-radius: 14px;
+    padding: 12px 14px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  }
+  #new-records-banner .nb-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  #new-records-banner .nb-msg {
+    font-weight: 600;
+    line-height: 1.2;
+    flex: 1 1 auto;
+    min-width: 180px;
+  }
+  #new-records-banner .nb-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  #new-records-banner button {
+    appearance: none;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  #new-records-banner .nb-load {
+    background: #22c55e;           /* green-500 */
+    color: #052e10;
+    border-color: #16a34a;
+  }
+  #new-records-banner .nb-dismiss {
+    background: #0b1220;
+    color: #cbd5e1;
+    border-color: #334155;
+  }
+  #new-records-banner label.nb-autoload {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    opacity: 0.9;
+  }
+
+  /* Small helper toast for "auto-loaded" */
+  #new-records-toast {
+    position: fixed;
+    right: 12px;
+    bottom: 12px;
+    z-index: 9999;
+    display: none;
+    background: #111827;           /* gray-900 */
+    color: #e5e7eb;                /* gray-200 */
+    border: 1px solid #1f2937;     /* gray-800 */
+    border-radius: 12px;
+    padding: 10px 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  }
