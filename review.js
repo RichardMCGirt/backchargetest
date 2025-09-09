@@ -24,7 +24,6 @@ const FILTER_BASE_FORMULA = `AND(
   )
 )`;
 
-
 // Cache & State
 const recordCache = {};            // `${tableId}_${recId}` -> displayName
 const tableRecords = {};
@@ -58,6 +57,12 @@ let disputeAmount2Input = null;
 // Read-only (no longer used for vendor name only)
 // Kept for compatibility if needed elsewhere
 let disputeVendorDisplay = null;
+
+let subReasonInput = null;        // NEW: reason for Sub backcharge
+let vendorReasonInput = null;     // NEW: reason for Vendor backcharge
+
+// NEW: make the conditional-UI updater accessible outside ensureDisputeForm
+let updateConditionalReasonsUI = null;
 
 /* =========================
    UTIL / UI HELPERS
@@ -94,7 +99,6 @@ function stopConsoleCountdown() {
     bgCountdownHandle = null;
   }
 }
-
 
 function looksLikeLinkedIds(arr) {
   if (!Array.isArray(arr) || arr.length === 0) return false;
@@ -213,7 +217,6 @@ function getLinkedRecords(tableId, fieldVal) {
     })
     .filter(x => x.name);
 }
-
 
 // Convenience getters
 function getTechNamesFromRecord(rec) {
@@ -451,7 +454,6 @@ async function fetchBackcharges() {
   populateFilterDropdowns();
   renderReviews();
 }
-
 
 /* =========================
    RENDER CARDS
@@ -904,6 +906,30 @@ function openDecisionSheet(recordId, jobName, decision) {
     disputeVendorAmountInput.value = formatUSD(originalVendorAmt);
   }
 
+  // Prefill conditional backcharge reason fields (if those columns exist)
+  const recFields = rec?.fields || {};
+
+  // Sub backcharge reason: prefer an explicit sub backcharge field, fallback to generic if that’s what your base uses
+  const subReasonFieldName =
+    ["Reason for Backcharge", "Reason for backcharge", "Reason for dispute", "Reason"]
+      .find(k => Object.prototype.hasOwnProperty.call(recFields, k)) || null;
+
+  if (subReasonInput) {
+    subReasonInput.value = subReasonFieldName ? (recFields[subReasonFieldName] || "") : "";
+  }
+
+  // Vendor backcharge reason: handle a few likely schemas, only prefill if present
+  const vendorReasonFieldName =
+    ["Vendor Backcharge reason", "Vendor Backcharge Reason", "Reason for Vendor Backcharge", "Reason for Vendor backcharge"]
+      .find(k => Object.prototype.hasOwnProperty.call(recFields, k)) || null;
+
+  if (vendorReasonInput) {
+    vendorReasonInput.value = vendorReasonFieldName ? (recFields[vendorReasonFieldName] || "") : "";
+  }
+
+  // Ensure visibility/required state matches current selections and amounts
+  try { updateConditionalReasonsUI && updateConditionalReasonsUI(); } catch {}
+
   // Keep both rows visible/editable in both modes
   const primaryRowEl = disputeFormContainer.querySelector("#bf-primary-sub-row");
   const vendorRowEl  = disputeFormContainer.querySelector("#bf-vendor-row");
@@ -912,7 +938,7 @@ function openDecisionSheet(recordId, jobName, decision) {
   if (disputeAmountInput) disputeAmountInput.disabled = false;
   if (disputeVendorAmountInput) disputeVendorAmountInput.disabled = false;
 
-  approveBtn.classList.toggle("attn", decision === "Approved");
+  approveBtn.classList.toggle("attn", decision === "Approve");   // FIXED
   disputeBtn.classList.toggle("attn", decision === "Dispute");
   approveBtn.textContent = "✔ Approved";
   disputeBtn.textContent = "✖ Dispute";
@@ -946,6 +972,8 @@ function ensureBackchargeFormStyles() {
       align-items: start;
       box-sizing: border-box;
     }
+      #disputeFormContainer .bf-reason label .asterisk { opacity:.9; }
+
     #disputeFormContainer label {
       font-weight: 600;
       align-self: center;
@@ -1044,6 +1072,22 @@ function ensureDisputeForm(sheet) {
       <input id="disputeVendorAmountInput" type="text" inputmode="decimal" placeholder="$0.00" />
     </div>
 
+        <!-- Row: Sub Reason (conditional full width) -->
+    <div id="bf-sub-reason-row" class="bf-reason bf-hidden">
+      <label for="subReasonInput">
+        Reason for Backcharge <span class="asterisk">*</span>
+      </label>
+      <textarea id="subReasonInput" placeholder="Required when a Sub is selected and amount is entered"></textarea>
+    </div>
+
+    <!-- Row: Vendor Reason (conditional full width) -->
+    <div id="bf-vendor-reason-row" class="bf-reason bf-hidden">
+      <label for="vendorReasonInput">
+        Reason for Vendor Backcharge <span class="asterisk">*</span>
+      </label>
+      <textarea id="vendorReasonInput" placeholder="Required when a Vendor is selected and amount is entered"></textarea>
+    </div>
+
     <br>
 
     <!-- Row: Reason (full width) -->
@@ -1063,6 +1107,44 @@ function ensureDisputeForm(sheet) {
     disputeVendorAmountInput  = disputeFormContainer.querySelector("#disputeVendorAmountInput");
 
     disputeReasonInput        = disputeFormContainer.querySelector("#disputeReasonInput");
+
+    subReasonInput            = disputeFormContainer.querySelector("#subReasonInput");
+    vendorReasonInput         = disputeFormContainer.querySelector("#vendorReasonInput");
+
+    const subReasonRow    = disputeFormContainer.querySelector("#bf-sub-reason-row");
+    const vendorReasonRow = disputeFormContainer.querySelector("#bf-vendor-reason-row");
+
+    // EXPOSED globally via outer-scope variable
+    updateConditionalReasonsUI = () => {
+      const subChosen    = !!(disputeSubSelect?.value || "");
+      const vendorChosen = !!(disputeVendorSelect?.value || "");
+
+      const subAmtVal    = parseCurrencyInput(disputeAmountInput?.value ?? "");
+      const vendorAmtVal = parseCurrencyInput(disputeVendorAmountInput?.value ?? "");
+
+      const needSubReason    = subChosen    && subAmtVal != null && subAmtVal > 0;
+      const needVendorReason = vendorChosen && vendorAmtVal != null && vendorAmtVal > 0;
+
+      // Toggle visibility
+      subReasonRow?.classList.toggle("bf-hidden", !needSubReason);
+      vendorReasonRow?.classList.toggle("bf-hidden", !needVendorReason);
+
+      // Toggle required attributes for a11y
+      if (subReasonInput) {
+        subReasonInput.required = needSubReason;
+        subReasonInput.setAttribute("aria-required", String(needSubReason));
+      }
+      if (vendorReasonInput) {
+        vendorReasonInput.required = needVendorReason;
+        vendorReasonInput.setAttribute("aria-required", String(needVendorReason));
+      }
+    };
+
+    // Recalculate when user changes selection or amounts
+    disputeSubSelect?.addEventListener("change", updateConditionalReasonsUI);
+    disputeVendorSelect?.addEventListener("change", updateConditionalReasonsUI);
+    disputeAmountInput?.addEventListener("input", updateConditionalReasonsUI);
+    disputeVendorAmountInput?.addEventListener("input", updateConditionalReasonsUI);
 
     // Currency formatting UX
     const hookupMoney = (inp) => {
@@ -1085,7 +1167,6 @@ function ensureDisputeForm(sheet) {
     sheet.appendChild(disputeFormContainer);
   }
 }
-
 
 // Build subcontractor options from preloaded table
 function buildSubcontractorOptions(selectEl) {
@@ -1275,17 +1356,54 @@ async function confirmDecision(decision) {
   // 🔧 CHANGED: patch **both** amount fields independently (no winner)
   fieldsToPatch["Backcharge Amount"] = subAmtParsed == null ? null : subAmtParsed;
 
-  // Only patch Vendor Amount to Backcharge if schema has it (avoid 422 on bases without it)
- // Always send it; Airtable omits empty fields from reads, but you can still write them.
-fieldsToPatch["Vendor Amount to Backcharge"] =
-  vendorAmtParsed == null ? null : vendorAmtParsed;
+  // Always send it; Airtable omits empty fields from reads, but you can still write them.
+  fieldsToPatch["Vendor Amount to Backcharge"] =
+    vendorAmtParsed == null ? null : vendorAmtParsed;
 
+  // === Conditional reason requirements ===
+  const needSubReason    = !!selectedSubId    && (subAmtParsed != null && subAmtParsed > 0);
+  const needVendorReason = !!selectedVendorId && (vendorAmtParsed != null && vendorAmtParsed > 0);
 
-  // Only patch "Reason for dispute" when Dispute
+  // Block if required reasons are missing
+  if (needSubReason && !(subReasonInput?.value || "").trim()) {
+    alert("Please provide a Reason for Backcharge for the Subcontractor.");
+    subReasonInput?.focus();
+    return;
+  }
+  if (needVendorReason && !(vendorReasonInput?.value || "").trim()) {
+    alert("Please provide a Reason for Vendor Backcharge.");
+    vendorReasonInput?.focus();
+    return;
+  }
+
+  // === Prepare reason fields to patch ===
+  const recFields = rec?.fields || {};
+
+  // Sub reason field (prioritize an explicit sub-backcharge reason column)
+  const subReasonFieldName =
+    ["Reason for Backcharge", "Reason for backcharge", "Reason for dispute", "Reason"]
+      .find(k => Object.prototype.hasOwnProperty.call(recFields, k)) || null;
+
+  if (needSubReason && subReasonFieldName) {
+    fieldsToPatch[subReasonFieldName] = (subReasonInput?.value || "").trim();
+  }
+
+  // Vendor reason field (only patch if column exists to avoid 422)
+  const vendorReasonFieldName =
+    ["Vendor Backcharge reason", "Vendor Backcharge Reason", "Reason for Vendor Backcharge", "Reason for Vendor backcharge"]
+      .find(k => Object.prototype.hasOwnProperty.call(recFields, k)) || null;
+
+  if (needVendorReason && vendorReasonFieldName) {
+    fieldsToPatch[vendorReasonFieldName] = (vendorReasonInput?.value || "").trim();
+  }
+
+  // Keep existing behavior: when Dispute, also write the generic dispute reason if your base uses that.
   if (decision === "Dispute") {
-    const reasonFieldName = pickFieldName(rec?.fields || {}, ["Reason for dispute"]);
-    const editedReason = (disputeReasonInput?.value ?? "").trim();
-    fieldsToPatch[reasonFieldName] = editedReason || null;
+    const disputeReasonField = ["Reason for dispute", "Reason"]
+      .find(k => Object.prototype.hasOwnProperty.call(recFields, k));
+    if (disputeReasonField && disputeReasonInput) {
+      fieldsToPatch[disputeReasonField] = (disputeReasonInput.value || "").trim() || null;
+    }
   }
 
   console.log("📤 PATCH payload prepared:", fieldsToPatch);
@@ -1330,7 +1448,6 @@ fieldsToPatch["Vendor Amount to Backcharge"] =
     console.log("🏁 confirmDecision finished");
   }
 }
-
 
 /* =========================
    FILTER DROPDOWNS
@@ -1468,7 +1585,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 })();
 
-
 /* =========================
    Background New Records Finder for Airtable
    - Detects records not currently shown in UI
@@ -1480,7 +1596,6 @@ document.addEventListener("DOMContentLoaded", () => {
 // const AIRTABLE_API_KEY = "...";
 // const BASE_ID = "...";
 // const TABLE_ID = "...";
-
 
 /** Poll interval (ms) */
 const BACKGROUND_CHECK_INTERVAL_MS = 15 * 60 * 1000; // 900000 ms = 15 minutes
@@ -1581,22 +1696,7 @@ function startBackgroundNewRecordsCheck() {
     }
   });
 
-  bgIntervalHandle = setInterval(tick, BACKGROUND_CHECK_INTERVAL_MS);
-  // quick first run + a short countdown to it
-  setTimeout(tick, 1500);
-  startConsoleCountdown(1500);
-
-  // Pause timers when the tab is hidden; resume when visible
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden") {
-      if (bgIntervalHandle) { clearInterval(bgIntervalHandle); bgIntervalHandle = null; }
-      stopConsoleCountdown();
-    } else {
-      if (!bgIntervalHandle) bgIntervalHandle = setInterval(tick, BACKGROUND_CHECK_INTERVAL_MS);
-      setTimeout(tick, 1500);
-      startConsoleCountdown(1500);
-    }
-  });
+  // (The duplicate setInterval/listener block has been deduped)
 }
 
 function showBgToast(text, ms = 3000) {
@@ -1606,8 +1706,6 @@ function showBgToast(text, ms = 3000) {
   clearTimeout(el._t);
   el._t = setTimeout(() => { el.style.display = "none"; }, ms);
 }
-
-
 
 function ensureBannerDom() {
   if (document.getElementById("new-records-banner")) return;
@@ -1677,9 +1775,6 @@ async function fetchUpdatedRecordsSince(sinceIso) {
   return all;
 }
 
-
-
-
 /**
  * Minimal banner UI: asks user to load unseen records.
  */
@@ -1716,17 +1811,6 @@ function showNewRecordsBanner(unseenRecords) {
   }, { once: true });
 }
 
-
-/** Tiny toast for auto-loaded case */
-function showToast(text, ms = 3000) {
-  const el = document.getElementById("new-records-toast");
-  el.textContent = text;
-  el.style.display = "block";
-  clearTimeout(el._t);
-  el._t = setTimeout(() => { el.style.display = "none"; }, ms);
-}
-
-
 function renderNewRecords(records) {
   try {
     if (!Array.isArray(records) || records.length === 0) return;
@@ -1745,7 +1829,3 @@ function renderNewRecords(records) {
     console.error("renderNewRecords error:", e);
   }
 }
-
-
-
-
