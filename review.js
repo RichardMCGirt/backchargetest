@@ -25,6 +25,9 @@ const FILTER_BASE_FORMULA = `AND(
 const recordCache = {};            
 const tableRecords = {};
 const FORCE_AUTOLOAD = true;
+const VENDOR_BACKCHARGE_REASON_FIELD = "Vendor Backcharge Reason";
+const SUB_BACKCHARGE_REASON_FIELD    = "Sub Reason for Backcharge";
+
        
 let allRecords = []; 
 let activeTechFilter = null;
@@ -903,8 +906,9 @@ function openDecisionSheet(recordId, jobName, decision) {
       .find(k => Object.prototype.hasOwnProperty.call(recFields, k)) || null;
 
   if (vendorReasonInput) {
-    vendorReasonInput.value = vendorReasonFieldName ? (recFields[vendorReasonFieldName] || "") : "";
-  }
+  vendorReasonInput.value = rec?.fields?.[VENDOR_BACKCHARGE_REASON_FIELD] || "";
+}
+
 
   // Ensure visibility/required state matches current selections and amounts
   try { updateConditionalReasonsUI && updateConditionalReasonsUI(); } catch {}
@@ -1355,22 +1359,40 @@ async function confirmDecision(decision) {
   const recFields = rec?.fields || {};
 
   // Sub reason field (prioritize an explicit sub-backcharge reason column)
-  const subReasonFieldName =
-    ["Sub Reason for Backcharge"]
-      .find(k => Object.prototype.hasOwnProperty.call(recFields, k)) || null;
+  const subReasonVal = (subReasonInput?.value || "").trim();
+if (subAmtParsed != null && subAmtParsed > 0 && !subReasonVal) {
+  alert("Please provide a Subcontractor Reason when an amount is entered.");
+  subReasonInput?.focus();
+  return;
+}
+if (subReasonVal) {
+  fieldsToPatch[SUB_BACKCHARGE_REASON_FIELD] = subReasonVal;
+} else {
+  fieldsToPatch[SUB_BACKCHARGE_REASON_FIELD] = null; // optional clear
+}
 
-  if (needSubReason && subReasonFieldName) {
-    fieldsToPatch[subReasonFieldName] = (subReasonInput?.value || "").trim();
-  }
 
   // Vendor reason field (only patch if column exists to avoid 422)
-  const vendorReasonFieldName =
-    ["Vendor Backcharge reason"]
-      .find(k => Object.prototype.hasOwnProperty.call(recFields, k)) || null;
+  // NEW (correct)
+const vendorReasonVal = (vendorReasonInput?.value || "").trim();
 
-  if (needVendorReason && vendorReasonFieldName) {
-    fieldsToPatch[vendorReasonFieldName] = (vendorReasonInput?.value || "").trim();
-  }
+// If amount > 0, require a reason
+if (vendorAmtParsed != null && vendorAmtParsed > 0 && !vendorReasonVal) {
+  alert("Please provide a Vendor Reason when an amount is entered.");
+  vendorReasonInput?.focus();
+  return;
+}
+
+// Decide what to send:
+//  - If user typed a reason, send it.
+//  - If they cleared it, send null to clear the cell (optional; keep if you want clearing).
+if (vendorReasonVal) {
+  fieldsToPatch[VENDOR_BACKCHARGE_REASON_FIELD] = vendorReasonVal;
+} else {
+  // Optional: only include this line if you want to clear the field when left blank
+  fieldsToPatch[VENDOR_BACKCHARGE_REASON_FIELD] = null;
+}
+
 
   // Keep existing behavior: when Dispute, also write the generic dispute reason if your base uses that.
   if (decision === "Dispute") {
