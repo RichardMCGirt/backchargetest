@@ -1,17 +1,18 @@
-/* =========================
-   CONFIG / CONSTANTS
-========================= */
 const AIRTABLE_API_KEY = "pat6QyOfQCQ9InhK4.4b944a38ad4c503a6edd9361b2a6c1e7f02f216ff05605f7690d3adb12c94a3c";
 const BASE_ID = "appQDdkj6ydqUaUkE";
-const TABLE_ID = "viwB9TyxCf95c3oqb";
+const TABLE_ID = "tblg98QfBxRd6uivq";
 
 const SUBCONTRACTOR_TABLE = "tblgsUP8po27WX7Hb"; // “Subcontractor Company Name”
 const CUSTOMER_TABLE      = "tblQ7yvLoLKZlZ9yU"; // “Client Name”
 const TECH_TABLE          = "tblj6Fp0rvN7QyjRv"; // “Full Name”
 const BRANCH_TABLE        = "tblD2gLfkTtJYIhmK"; // “Office Name”
 const VENDOR_TABLE        = "tblp77wpnsiIjJLGh"; // Vendor table used by "Vendor to backcharge"
-const DEFAULT_VIEW_FOR_BG_CHECK = "viwTHoVVR3TsPDR6k";
-let bgCountdownHandle = null;
+const DEFAULT_VIEW_FOR_BG_CHECK = "viwB9TyxCf95c3oqb";
+const recordCache = {};            
+const tableRecords = {};
+const FORCE_AUTOLOAD = true;
+const VENDOR_BACKCHARGE_REASON_FIELD = "Vendor Backcharge Reason";
+const SUB_BACKCHARGE_REASON_FIELD    = "Sub Reason for Backcharge";
 
 const FILTER_BASE_FORMULA = `AND(
   {Type of Backcharge} = 'Builder Issued Backcharge',
@@ -21,14 +22,7 @@ const FILTER_BASE_FORMULA = `AND(
   )
 )`;
 
-// Cache & State
-const recordCache = {};            
-const tableRecords = {};
-const FORCE_AUTOLOAD = true;
-const VENDOR_BACKCHARGE_REASON_FIELD = "Vendor Backcharge Reason";
-const SUB_BACKCHARGE_REASON_FIELD    = "Sub Reason for Backcharge";
-
-       
+let bgCountdownHandle = null;
 let allRecords = []; 
 let activeTechFilter = null;
 let activeBranchFilter = null;
@@ -62,19 +56,27 @@ function recordMatchesScope(rec){
 
 function startConsoleCountdown(durationMs) {
   stopConsoleCountdown();
-  const pad = (n) => String(n).padStart(2, "0");
   const end = Date.now() + Math.max(0, durationMs);
+  let lastMins = -1;
 
   const print = () => {
     const remaining = Math.max(0, end - Date.now());
-    const totalSec = Math.ceil(remaining / 1000);
-    const mm = Math.floor(totalSec / 60);
-    const ss = totalSec % 60;
-    if (remaining <= 0) stopConsoleCountdown();
+    const mins = Math.ceil(remaining / 60000); // minutes remaining, rounded up
+
+    if (remaining <= 0) {
+      console.log("⏱ next check now");
+      stopConsoleCountdown();
+      return;
+    }
+
+    if (mins !== lastMins) {
+      lastMins = mins;
+      console.log(`⏱ next check in ${mins} min${mins !== 1 ? "s" : ""}`);
+    }
   };
 
-  print(); // log immediately
-  bgCountdownHandle = setInterval(print, 1000);
+  print(); // initial log
+  bgCountdownHandle = setInterval(print, 1000); // check each second, log only on minute change
 }
 
 function stopConsoleCountdown() {
@@ -174,7 +176,6 @@ function getLinkedRecords(tableId, fieldVal) {
   return arr
     .map(v => {
       if (typeof v === "string" && /^rec[A-Za-z0-9]{14}$/.test(v)) {
-        // Try cache first
         let name = getCachedRecord(tableId, v);
 
         // If cache still holds an ID, try to resolve from preloaded tableRecords
@@ -1508,6 +1509,52 @@ function restoreFilters() {
   applyFiltersFromURLOrStorage();
 }
 
+async function runBgCheckNow() {
+  stopConsoleCountdown();
+  if (bgInFlight) return;
+  bgInFlight = true;
+  try {
+    const sinceIso = localStorage.getItem(LS_LAST_CHECK_ISO) || INITIAL_LOAD_ISO;
+    console.log("🔎 Manual background fetch… (since:", sinceIso, ")");
+    const updates = await fetchUpdatedRecordsSince(sinceIso);
+
+    const toAdd = updates.filter(r => recordMatchesScope(r) && !CURRENT_RECORD_IDS.has(r.id));
+    const toRemove = updates.filter(r => !recordMatchesScope(r) && CURRENT_RECORD_IDS.has(r.id));
+
+    if (toAdd.length > 0) {
+      const shouldAutoload = FORCE_AUTOLOAD || (localStorage.getItem(LS_AUTOLOAD) === "1");
+      if (shouldAutoload) {
+        renderNewRecords(toAdd);
+        toAdd.forEach(r => CURRENT_RECORD_IDS.add(r.id));
+        console.log(`✅ Auto-loaded ${toAdd.length} new record${toAdd.length>1?'s':''}`);
+      } else {
+        showNewRecordsBanner(toAdd);
+      }
+    }
+
+    if (toRemove.length > 0) {
+      const ids = new Set(toRemove.map(r => r.id));
+      allRecords = allRecords.filter(r => !ids.has(r.id));
+      ids.forEach(id => CURRENT_RECORD_IDS.delete(id));
+      populateFilterDropdowns();
+      renderReviews();
+      console.log(`🧹 Removed ${toRemove.length} record${toRemove.length>1?'s':''} that left scope`);
+    }
+
+    const nextIso = new Date(Date.now() - 30 * 1000).toISOString();
+    localStorage.setItem(LS_LAST_CHECK_ISO, nextIso);
+  } catch (e) {
+    console.error("Manual background check failed:", e);
+  } finally {
+    bgInFlight = false;
+    startConsoleCountdown(BACKGROUND_CHECK_INTERVAL_MS);
+  }
+}
+
+// Optional: expose on window for quick console use
+window.runBgCheckNow = runBgCheckNow;
+
+
 /* =========================
    EVENT WIRING
 ========================= */
@@ -1578,7 +1625,7 @@ document.addEventListener("DOMContentLoaded", () => {
 })();
 
 /** Poll interval (ms) */
-const BACKGROUND_CHECK_INTERVAL_MS = 15 * 60 * 1000; // 900000 ms = 15 minutes
+const BACKGROUND_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 
 /** LocalStorage keys */
 const LS_AUTOLOAD = "vanir_autoload_new_records";
@@ -1725,10 +1772,11 @@ async function fetchUpdatedRecordsSince(sinceIso) {
   const urlBase = `https://api.airtable.com/v0/${encodeURIComponent(BASE_ID)}/${encodeURIComponent(TABLE_ID)}`;
   const headers = { "Authorization": `Bearer ${AIRTABLE_API_KEY}` };
 
-  const filter = `OR(
-    IS_AFTER(CREATED_TIME(), DATETIME_PARSE("${sinceIso}")),
-    IS_AFTER(LAST_MODIFIED_TIME(), DATETIME_PARSE("${sinceIso}"))
-  )`;
+ const filter = `OR(
+  IS_AFTER(CREATED_TIME(), SET_TIMEZONE(DATETIME_PARSE("${sinceIso}", "YYYY-MM-DDTHH:mm:ss.SSS[Z]"), "UTC")),
+  IS_AFTER(LAST_MODIFIED_TIME(), SET_TIMEZONE(DATETIME_PARSE("${sinceIso}", "YYYY-MM-DDTHH:mm:ss.SSS[Z]"), "UTC"))
+)`;
+
 
   const params = new URLSearchParams();
   params.set("pageSize", "100");
