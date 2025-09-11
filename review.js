@@ -15,11 +15,7 @@ const VENDOR_BACKCHARGE_REASON_FIELD = "Vendor Backcharge Reason";
 const SUB_BACKCHARGE_REASON_FIELD    = "Sub Reason for Backcharge";
 
 const FILTER_BASE_FORMULA = `AND(
-  {Type of Backcharge} = 'Builder Issued Backcharge',
-  OR(
-    {Approved or Dispute} = "",
-    NOT({Approved or Dispute})
-  )
+  {Type of Backcharge} = 'Builder Issued Backcharge'
 )`;
 
 let bgCountdownHandle = null;
