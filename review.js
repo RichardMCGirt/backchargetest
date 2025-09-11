@@ -3,7 +3,7 @@
 ========================= */
 const AIRTABLE_API_KEY = "pat6QyOfQCQ9InhK4.4b944a38ad4c503a6edd9361b2a6c1e7f02f216ff05605f7690d3adb12c94a3c";
 const BASE_ID = "appQDdkj6ydqUaUkE";
-const TABLE_ID = "tblg98QfBxRd6uivq";
+const TABLE_ID = "viwB9TyxCf95c3oqb";
 
 const SUBCONTRACTOR_TABLE = "tblgsUP8po27WX7Hb"; // “Subcontractor Company Name”
 const CUSTOMER_TABLE      = "tblQ7yvLoLKZlZ9yU"; // “Client Name”
@@ -1371,9 +1371,7 @@ if (subReasonVal) {
   fieldsToPatch[SUB_BACKCHARGE_REASON_FIELD] = null; // optional clear
 }
 
-
   // Vendor reason field (only patch if column exists to avoid 422)
-  // NEW (correct)
 const vendorReasonVal = (vendorReasonInput?.value || "").trim();
 
 // If amount > 0, require a reason
@@ -1384,15 +1382,12 @@ if (vendorAmtParsed != null && vendorAmtParsed > 0 && !vendorReasonVal) {
 }
 
 // Decide what to send:
-//  - If user typed a reason, send it.
-//  - If they cleared it, send null to clear the cell (optional; keep if you want clearing).
 if (vendorReasonVal) {
   fieldsToPatch[VENDOR_BACKCHARGE_REASON_FIELD] = vendorReasonVal;
 } else {
   // Optional: only include this line if you want to clear the field when left blank
   fieldsToPatch[VENDOR_BACKCHARGE_REASON_FIELD] = null;
 }
-
 
   // Keep existing behavior: when Dispute, also write the generic dispute reason if your base uses that.
   if (decision === "Dispute") {
